@@ -1,0 +1,52 @@
+plugins {
+    id("io.micronaut.application") version "1.5.0"
+}
+
+version = "0.1"
+group = "micronaut.bug"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations {
+    ecj
+}
+
+micronaut {
+    runtime("netty")
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("micronaut.bug.*")
+    }
+}
+
+dependencies {
+    implementation("io.micronaut:micronaut-runtime")
+    implementation("javax.annotation:javax.annotation-api")
+    runtimeOnly("ch.qos.logback:logback-classic")
+
+    ecj("org.eclipse.jdt:ecj:3.22.0")
+}
+
+application {
+    mainClass.set("micronaut.bug.Application")
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion("11")
+    targetCompatibility = JavaVersion.toVersion("11")
+}
+
+task ecj(type: JavaExec, dependsOn: 'assemble') {
+    classpath = sourceSets.main.compileClasspath + configurations.annotationProcessor + configurations.ecj
+    main = 'org.eclipse.jdt.internal.compiler.batch.Main'
+    args = [
+            '-source','11', '-target','11',
+            '-d', "${project.buildDir}/ecj/classes", '-s', "${project.buildDir}/ecj/generated",
+            *sourceSets.main.allJava.files.toArray()
+    ]
+}
+
